@@ -1,0 +1,8 @@
+cmake-build-*
+build
+.vscode
+.idea
+data/*
+extern
+out/*
+saved_models
