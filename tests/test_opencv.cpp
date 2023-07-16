@@ -1,18 +1,20 @@
 #include "../opencv_image_io.hpp"
 
 int main(int argc, const char *argv[]) {
-    std::string picName{"1f4a90ef62"};
+    std::string picName{"1a0ad579d6"};
     std::string msg = "sample image ";
     msg += picName;
     auto currentPath =
-            std::string("C:\\Users\\15258\\work\\PrintLaTeX\\main\\data\\formula_images\\") + picName + ".png";
-    auto img_tensor = image_io::ReadImage_gray(currentPath);
-    auto img_t = image_io::ToCvImage(img_tensor, CV_8UC1);
-    image_io::test::show_image(img_t, msg);
+            std::string(R"(C:\Users\15258\work\PrintLaTeX\main\data\formula_images_processed\)") + picName +
+            ".png";
+    auto img_tensor = image_io::ReadImage_Transform(currentPath);
+//    std::cout << img_tensor.index({torch::indexing::Slice(17, 18), torch::indexing::Slice(0, 10)}) << '\n';
+     auto img_t = image_io::ToCvImage(img_tensor, CV_8UC1);
+     image_io::test::show_image(img_t, msg);
 
+     auto t2 = image_io::ReadImage_gray(currentPath);
+//     std::cout << t2.index({torch::indexing::Slice(17, 18), torch::indexing::Slice(0, 10)}) << '\n';
 
-    auto img = cv::imread(currentPath, cv::IMREAD_GRAYSCALE);
-    image_io::test::show_image(img, msg);
 //    // convert the cvimage into tensor
 //    auto tensor = ToTensor(img);
 //

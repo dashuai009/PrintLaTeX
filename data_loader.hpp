@@ -69,7 +69,7 @@ public:
         std::string image_name, tmp;
         while (D >> index >> image_name >> tmp) {
             samples_.emplace_back(image_name, Formulas[index]);
-            if (mode == Mode::TinyTrain && samples_.size() > 5) {
+            if (mode == Mode::TinyTrain && samples_.size() == 200) {
                 // 小训练集，500个
                 break;
             }
@@ -78,8 +78,9 @@ public:
 
     LaTeXDataType get(size_t index) override {
         const auto &[image_name, formula] = samples_[index];
-        auto image = image_io::ReadImage_gray(data_root + "/formula_images/" + image_name + ".png");// (h * w * 1)
-
+        auto file_path = data_root + "/formula_images_processed/" + image_name + ".png";
+        auto image = image_io::ReadImage_Transform(file_path);
+        // (h * w * 1)
         auto w = image.size(1);
         auto h = image.size(0);
         return {image.reshape({1, h, w}),
@@ -110,7 +111,7 @@ private:
 std::pair<at::Tensor, at::Tensor>
 collate_fn(const std::vector<LaTeXDataType> &batch,
            const Tokenizer &tokenizer) {
-    int64_t batch_size = static_cast<int64_t>(batch.size());
+    auto batch_size = static_cast<int64_t>(batch.size());
     auto max_H = batch[0].first.size(1);
     auto max_W = batch[0].first.size(2);
     auto max_len = batch[0].second.size();
@@ -121,8 +122,7 @@ collate_fn(const std::vector<LaTeXDataType> &batch,
     }
     auto padded_images = torch::zeros({batch_size, 1, max_H, max_W}, at::kByte);
     auto batched_indices =
-            torch::zeros({batch_size, static_cast<int64_t>(max_len) + 2},
-                         at::TensorOptions(at::ScalarType::Long));
+            torch::full({batch_size, static_cast<int64_t>(max_len) + 2}, 79).toType(at::ScalarType::Long);// 79 <EOS>
 
     std::random_device r;
     std::default_random_engine e1(r());
@@ -144,7 +144,7 @@ collate_fn(const std::vector<LaTeXDataType> &batch,
                                                     torch::TensorOptions(at::kInt)));
         i += 1;
     }
-    return {padded_images.to(at::kFloat).clone(), batched_indices};
+    return {padded_images.to(at::kFloat).div(255).clone(), batched_indices};
 }
 
 } // namespace LaTeXDataSet

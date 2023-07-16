@@ -16,6 +16,26 @@ Tensor generate_square_subsequent_mask(int in_size) {
     return mask;
 }
 
+/**
+ *  Find the first occurence of element in x along a given dimension.
+ *
+    Usage:
+        >>> first_element(Tensor([[1, 2, 3], [2, 3, 3], [1, 1, 1]]), 3)
+        tensor([2, 1, 3])
+
+    Reference:
+        https://discuss.pytorch.org/t/first-nonzero-index/24769/9
+        https://github.com/kingyiusuen/image-to-latex/blob/main/image_to_latex/models/resnet_transformer.py#L176
+
+        I fixed an edge case where the element we are looking for is at index 0. The
+        original algorithm will return the length of x instead of 0.
+    """
+ * @tparam T
+ * @param x  The input tensor to be searched.
+ * @param element The number to look for.
+ * @param dim  The dimension to reduce.
+ * @return  Indices of the first occurence of the element in x. If not found, return the length of x along dim.
+ */
 template<typename T = int>
 Tensor find_first(const Tensor &x, int element, int dim = 1) {
     auto mask = (x == element);
@@ -157,17 +177,18 @@ public:
 
     /**
      * Make predictions at inference time.
-     * @param x :Input images, (B, C, H, W)
-     * @return (B, max_output_len) with elements in (0, num_classes - 1).
+     * @param x :Input images, (B, C, H, W), at::kFloat
+     * @return (B, max_output_len) with elements in (0, num_classes - 1). at::kFloat
      */
-    Tensor predict(Tensor x) {
+    Tensor predict(const Tensor &x) {
+//        std::cout << "predict" << x.scalar_type() << ' ' << x.sizes() << '\n';
         using namespace torch::indexing;
         auto B = x.size(0);
         auto S = max_output_len;
 
-        auto encoded_x = encode(x);
+        auto encoded_x = encode(x); // (Sx, B, E)
 
-        auto output_indices = _cast_Long(torch::full({B, S}, pad_index).type_as(x));
+        auto output_indices = torch::full({B, S}, pad_index).type_as(x).toType(at::kLong);
         output_indices.index_put_({Slice(), 0}, sos_index);
         auto has_ended = torch::full({B,}, false);
 
@@ -175,7 +196,7 @@ public:
             auto y = output_indices.index({Slice(), Slice(None, sy)}); // (B, sy)
             auto logits = decode(y, encoded_x);
             auto output = torch::argmax(logits, -1);// (sy, B)
-            output_indices.index_put_({Slice(), sy}, output.index({Slice(-1, None)}));
+            output_indices.index_put_({Slice(), sy}, output.index({Slice(output.size(0) - 1, None)}));
             has_ended |= (output_indices.index({Slice(), sy}) == eos_index).type_as(has_ended);
             if (torch::all(has_ended).item<bool>()) {
                 break;
@@ -187,6 +208,7 @@ public:
             int j = int(eos_positions[i].item<int>()) + 1;
             output_indices.index_put_({i, Slice(j, None)}, pad_index);
         }
+//        std::cout << output_indices.index({Slice(), Slice(0, 20)}) << '\n';
         return output_indices;
     }
 

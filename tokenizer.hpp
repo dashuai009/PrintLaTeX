@@ -1,4 +1,5 @@
 #pragma once
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -10,13 +11,11 @@
 #include <set>
 
 class Tokenizer {
-
 public:
 
-
-    std::vector<int> encode(const std::vector<std::string> &formula) const{
+    std::vector<int> encode(const std::vector<std::string> &formula) const {
         std::vector<int> res{token_to_index[this->sos_token]};
-        for(auto & word: formula){
+        for (auto &word: formula) {
             if (token_to_index.find(word) != token_to_index.end()) {
                 res.push_back(token_to_index[word]);
             } else {
@@ -27,7 +26,7 @@ public:
         return res;
     }
 
-    std::string decode(const std::vector<int> &indices, bool inference = true) {
+    std::string decode(const std::vector<int> &indices, bool inference = true) const {
         std::string res;
         for (auto index: indices) {
             assert(index_to_token.find(index) != index_to_token.end());
@@ -73,17 +72,24 @@ public:
         for (const auto &token: ignore_tokens) {
             ignore_indices.insert(token_to_index[token]);
         }
+//        for(auto [index, token]:index_to_token){
+//            std::cout << index << '[' << token << "]\n";
+//        }
     }
 
-    size_t size(){
+    size_t size() {
         return token_to_index.size();
+    }
+
+    const std::set<int> get_ignore_indices() {
+        return ignore_indices;
     }
 
     const std::string pad_token{"<PAD>"}, sos_token{"<SOS>"},
             eos_token{"<EOS>"}, unk_token{"<UNK>"};
 private:
     mutable std::map<std::string, int> token_to_index;
-    std::map<int, std::string> index_to_token;
-    std::set<std::string> ignore_tokens{pad_token, sos_token, eos_token, unk_token};
+    mutable std::map<int, std::string> index_to_token;
     std::set<int> ignore_indices;
+    const std::set<std::string> ignore_tokens{pad_token, sos_token, eos_token, unk_token};
 };

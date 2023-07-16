@@ -36,39 +36,23 @@ add_subdirectory(resnet)
 ## resnet end
 
 ## include stb
-include(FetchContent)
-set(STB_LIB_NAME stb)
-FetchContent_Declare(
-        ${STB_LIB_NAME}
-        GIT_REPOSITORY https://github.com/nothings/stb.git
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb
-)
-FetchContent_MakeAvailable(${STB_LIB_NAME})
-add_library(${STB_LIB_NAME} INTERFACE)
-target_sources(
-        ${STB_LIB_NAME}
-        INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image_write.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image_resize.h
-)
-target_include_directories(${STB_LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb)
-#
-#foreach(STB_IMAGE_LIB "stb_image" "stb_image_write" "stb_image_resize")
-#    FetchContent_Declare(
-#            extern_${STB_IMAGE_LIB}
-#            URL https://raw.githubusercontent.com/nothings/stb/master/${STB_IMAGE_LIB}.h
-#            DOWNLOAD_NO_EXTRACT ON
-#            DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${STB_IMAGE_LIB}
-#    )
-#    FetchContent_MakeAvailable(extern_${STB_IMAGE_LIB})
-#
-#    string(REPLACE "_" "-" LIB_NAME ${STB_IMAGE_LIB})
-#
-#    add_library(${LIB_NAME} INTERFACE)
-#    target_sources(${LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${STB_IMAGE_LIB}/${STB_IMAGE_LIB}.h)
-#    target_include_directories(${LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${STB_IMAGE_LIB})
-#endforeach()
+#include(FetchContent)
+#set(STB_LIB_NAME stb)
+#FetchContent_Declare(
+#        ${STB_LIB_NAME}
+#        GIT_REPOSITORY https://github.com/nothings/stb.git
+#        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb
+#)
+#FetchContent_MakeAvailable(${STB_LIB_NAME})
+#add_library(${STB_LIB_NAME} INTERFACE)
+#target_sources(
+#        ${STB_LIB_NAME}
+#        INTERFACE
+#        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image.h
+#        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image_write.h
+#        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb/stb_image_resize.h
+#)
+#target_include_directories(${STB_LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb)
 
 set(OpenCV_DIR "C:/Users/15258/work/opencv/build")
 find_package(OpenCV REQUIRED)

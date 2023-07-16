@@ -6,7 +6,8 @@
 #include "../utils.hpp"
 #include <torch/torch.h>
 
-int main() {
+
+void test_in(){
     auto device = utils::get_device();
 
     double lr = 0.001;
@@ -69,24 +70,6 @@ int main() {
             image_io::test::show_image(img, "img1");
             std::cout << _target[0] <<'\n';
             break;
-            auto data = _data.to(device);
-            auto target = _target.to(device);
-            using torch::indexing::Slice, torch::indexing::None;
-            std::cout << data.sizes() << ' ' << target.sizes() << '\n';
-            auto output =
-                    model->forward(data, target.index({Slice(), Slice(None, _target.size(1))}));
-
-            auto loss =
-                    loss_fn(output, target.index({Slice(), Slice(1, None)}));
-//            running_loss += loss.item<double>() * data.size(0);
-//
-//            auto prediction = output.argmax(1);
-//
-//            num_correct += prediction.eq(target).sum().item<int64_t>();
-
-            optimizer.zero_grad();
-            loss.backward();
-            optimizer.step();
         }
         auto sample_mean_loss = running_loss / num_train_samples;
         auto accuracy = static_cast<double>(num_correct) / num_train_samples;
@@ -97,5 +80,12 @@ int main() {
     }
     std::cout << "Training finished!\n\n";
 //    torch::save(model, "./saved_models");
+}
+int main() {
+    std::vector<int32_t> vec{0 ,1, 2, 3,/**/
+                             2, 3, 3, 4,/**/
+                             1, 1, 1, 3};
+    torch::Tensor x = torch::from_blob(vec.data(), {3, 4}, torch::kInt);
+    std::cout << x << '\n' << find_first(x, 3);
     return 0;
 }

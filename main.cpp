@@ -2,8 +2,8 @@
 #include "train.hpp"
 #include "predict.hpp"
 
-int main(){
-//    train();
-    predict();
-    return 0;
+int main() {
+    train();
+//    predict_test();
+//    return 0;
 }
