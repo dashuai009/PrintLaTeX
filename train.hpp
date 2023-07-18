@@ -10,12 +10,12 @@ void train() {
     auto device = utils::get_device();
 
 //    std::vector<int> milestones{5};
-    double lr = 0.001;
+    double lr = 0.0001;
     double weight_decay = 1e-4;
     float gamma = 0.5;
-    int num_epochs = 300;
+    int num_epochs = 20;
     int batch_size = 16;
-    auto optim_scheduler_step = 40;
+    auto optim_scheduler_step = 10;
 
     utils::PrintLaTeXConfig config;
 
@@ -26,7 +26,7 @@ void train() {
     auto unk_index = tokenizer.encode({tokenizer.unk_token})[1];
 
     // training data
-    auto train_data_set = LaTeXDataSet::ImageFolderDataset("data");
+    auto train_data_set = LaTeXDataSet::ImageFolderDataset("data", LaTeXDataSet::ImageFolderDataset::Mode::Train);
     auto num_train_samples = train_data_set.size().value();
     std::cout << "train data set = " << num_train_samples << '\n';
     auto train_loader =
@@ -60,8 +60,8 @@ void train() {
     auto scheduler = torch::optim::StepLR(optimizer, optim_scheduler_step, gamma);
     model->eval();
 
-//    model->initWeights();
-    torch::load(model, "saved_models/1689523639.pt");
+    // model->initWeights();
+  torch::load(model, "saved_models/1689620223.pt");
 
     for (int epoch = 0; epoch < num_epochs; ++epoch) {
         model->train();

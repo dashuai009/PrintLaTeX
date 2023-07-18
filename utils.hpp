@@ -9,12 +9,12 @@ namespace utils {
 
 struct PrintLaTeXConfig {
     // model args
-    int d_model = 128;
+    int d_model = 256;
     int dim_feedforward = 256;
     int n_head = 4;
     float dropout = 0.3;
     int num_decoder_layers = 3;
-    int max_output_len = 500;
+    int max_output_len = 1400;
 };
 
 torch::Device get_device() {

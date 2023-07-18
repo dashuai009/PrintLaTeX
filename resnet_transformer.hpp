@@ -79,7 +79,7 @@ public:
         y_mask = register_buffer("y_mask", generate_square_subsequent_mask(this->max_output_len));
         word_position_encoder = register_module(
                 "word_position_encoder",
-                PositionalEncoding1D(d_model, /*in_dropout =*/ 0.1, this->max_output_len)
+                PositionalEncoding1D(d_model, /*in_dropout =*/ dropout, this->max_output_len)
         );
         transformer_decoder = register_module("transformer_decoder", torch::nn::TransformerDecoder(
                 torch::nn::TransformerDecoderLayer(
@@ -171,7 +171,7 @@ public:
         auto sy = y.size(0);
         auto _y_mask = y_mask.index({Slice(None, sy), Slice(None, sy)})
                 .type_as(x);
-        auto output = transformer_decoder(y, x, _y_mask);
+        auto output = transformer_decoder->forward(y, x, _y_mask);
         return fc(output);
     }
 
