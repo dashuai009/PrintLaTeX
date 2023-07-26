@@ -81,11 +81,15 @@ void test_in(){
     std::cout << "Training finished!\n\n";
 //    torch::save(model, "./saved_models");
 }
-int main() {
+
+void test_find_first(){
     std::vector<int32_t> vec{0 ,1, 2, 3,/**/
                              2, 3, 3, 4,/**/
                              1, 1, 1, 3};
     torch::Tensor x = torch::from_blob(vec.data(), {3, 4}, torch::kInt);
     std::cout << x << '\n' << find_first(x, 3);
+}
+int main() {
+    auto tokenizer = Tokenizer(2);
     return 0;
 }

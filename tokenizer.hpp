@@ -72,9 +72,15 @@ public:
         for (const auto &token: ignore_tokens) {
             ignore_indices.insert(token_to_index[token]);
         }
-//        for(auto [index, token]:index_to_token){
-//            std::cout << index << '[' << token << "]\n";
+//        for(auto [idx, token]:index_to_token){
+//            std::cout <<"(" << idx << ", " << token << ", " <<word_cnt[] << "]\n";
 //        }
+        std::sort(tmp.begin(), tmp.end(), [](const auto &x,const  auto &y) {
+            return y.second == x.second ? y.first < x.first : x.second < y.second;
+        });
+        for (auto [token, cnt]: tmp) {
+            std::cout << "(" << token << ", " << cnt << ")\n";
+        }
     }
 
     size_t size() {

@@ -38,17 +38,17 @@ auto ToCvImage(const at::Tensor &tensor, int mat_type) -> cv::Mat {
 auto ReadImage_Transform(const std::string &file_path) -> at::Tensor {
     auto img = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
 //    std::cout << img.rows << ' ' << img.cols << '\n';
-    if (utils::rand_p(1)) {// 50%的概率执行缩放
+    if (utils::rand_p(0.5)) {// 50%的概率执行缩放
 //        std::cout << "scale\n\n" << '\n';
         // 定义仿射变换矩阵
         cv::Mat M = cv::Mat::zeros(2, 3, CV_32FC1);
-        float scale_x = utils::rand_double(0.8, 1.2);
-        float scale_y = utils::rand_double(0.8, 1.2);
+        float scale_x = utils::rand_double(0.8, 1.1);
+//        float scale_y = utils::rand_double(0.8, 1.2);
 //        std::cout << scale_x << ' ' << scale_y << '\n';
         M.at<float>(0, 0) = scale_x;   // 缩放因子 x
-        M.at<float>(1, 1) = scale_y;   // 缩放因子 y
+//        M.at<float>(1, 1) = scale_y;   // 缩放因子 y
         // 进行仿射变换
-        cv::Mat dst = cv::Mat(img.rows * scale_y, img.cols * scale_x , img.type(), cv::Scalar(255));// 灰度图255是白色
+        cv::Mat dst = cv::Mat(img.rows, img.cols * scale_x, img.type(), cv::Scalar(255));// 灰度图255是白色
         cv::warpAffine(img, dst, M, dst.size());
         img = dst;
     }
@@ -89,22 +89,7 @@ auto ReadImage_Transform(const std::string &file_path) -> at::Tensor {
  * @return (Rows, Cols, 1) kByte
  */
 auto ReadImage_gray(const std::string &file_path) -> at::Tensor {
-    if (!std::filesystem::exists(file_path)) {
-        std::cout << file_path << " is not exists!\n";
-        exit(-2);
-    }
     auto img = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
-//    // Define the scaling factor
-//    double scalingFactor = 1.0; // 50% scaling
-//
-//    // Calculate the new dimensions based on the scaling factor
-//    int newWidth = static_cast<int>( img.cols * scalingFactor);
-//    int newHeight = static_cast<int>( img.rows * scalingFactor);
-//
-//    // Resize the image using the new dimensions
-//    cv::Mat scaledImage;
-//    cv::resize(img, scaledImage, cv::Size(newWidth, newHeight));
-
     // very important!! 注意注意！！这地方必须加clone，不然函数退出时img会被销毁，tensor将会失效
     at::Tensor tensor_image = torch::from_blob(img.data, {img.rows, img.cols, 1}, at::kByte).clone();
     return tensor_image;

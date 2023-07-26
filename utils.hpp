@@ -21,7 +21,7 @@ torch::Device get_device() {
 
     auto cuda_available = torch::cuda::cudnn_is_available();
     std::cout << "CUDA is " << (cuda_available ? "" : "not ")
-              << "avaiable, Training on " << (cuda_available ? "GPU" : "CPU")
+              << "available, Running on " << (cuda_available ? "GPU" : "CPU")
               << '\n';
     torch::Device device{cuda_available ? torch::kCUDA : torch::kCPU};
     return device;
@@ -141,8 +141,8 @@ public:
         _cur_progress = n;
         std::string f, p;
         if (n == 100) {
-            f = "\e[1;32mOK\e[m";
-            p = "\e[1;32m100%\e[m";
+            f = "OK";
+            p = "100%";
         } else {
             f = _flags[n % 4];
             p = std::to_string(n) + '%';

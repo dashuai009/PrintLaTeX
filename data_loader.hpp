@@ -3,7 +3,7 @@
 //
 #pragma once
 
-//#include "stb_image_io.hpp"
+// #include "stb_image_io.hpp"
 #include "opencv_image_io.hpp"
 #include "tokenizer.hpp"
 #include <filesystem>
@@ -33,7 +33,7 @@ std::vector<std::string> Split(const std::string &s) {
     while (ss >> word) {
         res.push_back(word);
     }
-    assert(res.size() < 1500);
+    assert(res.size() < 1400);
     return res;
 }
 
@@ -78,13 +78,16 @@ public:
 
     LaTeXDataType get(size_t index) override {
         const auto &[image_name, formula] = samples_[index];
-        auto file_path = data_root + "/formula_images_processed/" + image_name + ".png";
-        auto image = image_io::ReadImage_Transform(file_path);
+        auto file_path =
+                data_root + "/formula_images_processed/" + image_name + ".png";
+
+        auto image = mode_ == Mode::Validate
+                     ? image_io::ReadImage_gray(file_path)
+                     : image_io::ReadImage_Transform(file_path);
         // (h * w * 1)
         auto w = image.size(1);
         auto h = image.size(0);
-        return {image.reshape({1, h, w}),
-                Split(formula)};
+        return {image.reshape({1, h, w}), Split(formula)};
     }
 
     [[nodiscard]] torch::optional<size_t> size() const override {
@@ -120,9 +123,10 @@ collate_fn(const std::vector<LaTeXDataType> &batch,
         max_W = std::max(max_W, _image.size(2));
         max_len = std::max(max_len, _formulas.size());
     }
-    auto padded_images = torch::zeros({batch_size, 1, max_H, max_W}, at::kByte);
+    auto padded_images = torch::full({batch_size, 1, max_H, max_W}, 255).toType(at::kByte);
     auto batched_indices =
-            torch::full({batch_size, static_cast<int64_t>(max_len) + 2}, 79).toType(at::ScalarType::Long);// 79 <EOS>
+            torch::full({batch_size, static_cast<int64_t>(max_len) + 2}, 79)
+                    .toType(at::ScalarType::Long); // 79 <EOS>
 
     std::random_device r;
     std::default_random_engine e1(r());
@@ -139,9 +143,11 @@ collate_fn(const std::vector<LaTeXDataType> &batch,
         padded_images.index_put_({i, Slice(), Slice(y, y + H), Slice(x, x + W)},
                                  _image);
         auto indices = tokenizer.encode(_formula);
-        batched_indices.index_put_({i, Slice(None, indices.size())},
-                                   torch::from_blob(indices.data(), {static_cast<long long>(indices.size())},
-                                                    torch::TensorOptions(at::kInt)));
+        batched_indices.index_put_(
+                {i, Slice(None, indices.size())},
+                torch::from_blob(indices.data(),
+                                 {static_cast<long long>(indices.size())},
+                                 torch::TensorOptions(at::kInt)));
         i += 1;
     }
     return {padded_images.to(at::kFloat).div(255).clone(), batched_indices};

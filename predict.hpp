@@ -8,13 +8,12 @@
 
 
 std::vector<std::string> predict(ResNetTransformer model, const Tokenizer &tokenizer, const at::Tensor &input) {
-
     auto device = utils::get_device();
     torch::NoGradGuard no_grad;
     model->eval();
-    model->to(device);
+    model->to(device, at::kHalf);// cuda only
     model->train(false);
-    auto _x = input.to(device);
+    auto _x = input.to(at::kHalf).to(device);
     auto y = (model->predict(_x)).toType(at::kInt).cpu();
     // std::cout << y << '\n';
     std::vector<std::string> res;
@@ -67,26 +66,8 @@ void predict_test() {
             tokenizer.size()
     );
 
-    torch::load(model, "saved_models/1689524794.pt");
+    torch::load(model, "saved_models/1690387944.pt");
     std::cout << model << '\n';
-
-
-//    auto test_data_set = LaTeXDataSet::ImageFolderDataset("data");
-//    std::cout << "train data set = " << test_data_set.size().value() << '\n';
-//    auto test_loader =
-//            torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
-//                    std::move(test_data_set), 1);
-
-    // for (auto &batch: *test_loader) {
-    //     auto [_data, _target] = LaTeXDataSet::collate_fn(batch, tokenizer);
-    //     auto data = _data.to(device);
-    //     std::cout << data.sizes() << '\n';
-    //     auto target = _target.to(device);
-
-    //     auto y = (model->predict(data)).toType(at::kInt);
-    //     std::cout << y << '\n';
-    //     break;
-    // }
 
 
     auto image = image_io::ReadImage_gray(
@@ -97,6 +78,6 @@ void predict_test() {
     auto h = image.size(0);
     auto x = image.reshape({1, 1, h, w}).toType(at::kFloat).div(255); //( 1, 3, H, W)
     std::cout << "x = " << x.sizes() << ' ' << x.scalar_type() << '\n';
-//
+
     predict(model, tokenizer, x);
 }
