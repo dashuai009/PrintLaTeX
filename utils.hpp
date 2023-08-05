@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 #include "tokenizer.hpp"
 #include <cassert>
 #include <torch/torch.h>
@@ -7,22 +7,35 @@
 
 namespace utils {
 
-struct PrintLaTeXConfig {
-    // model args
-    int d_model = 256;
-    int dim_feedforward = 256;
-    int n_head = 4;
-    float dropout = 0.3;
-    int num_decoder_layers = 3;
-    int max_output_len = 1400;
-};
+//////// recommend Config1
+// model   3048-2
+//int d_model = 128;
+//int dim_feedforward = 256;
+//int n_head = 4;
+//float dropout = 0.3;
+//int num_decoder_layers = 3;
+//int max_output_len = 400;
+//// vocabulary
+//int token_min_count = 300;
+
+//////// recommend config2
+//
+int d_model = 256;
+int dim_feedforward = 256;
+int n_head = 4;
+float dropout = 0.1;
+int num_decoder_layers = 3;
+int max_output_len = 1400;
+//
+int token_min_count = 2;
 
 torch::Device get_device() {
-
     auto cuda_available = torch::cuda::cudnn_is_available();
+#ifdef DEBUG
     std::cout << "CUDA is " << (cuda_available ? "" : "not ")
               << "available, Running on " << (cuda_available ? "GPU" : "CPU")
               << '\n';
+#endif
     torch::Device device{cuda_available ? torch::kCUDA : torch::kCPU};
     return device;
 }
@@ -62,11 +75,10 @@ public:
 
     /**
      * 更新错误率
-     * @param preds 预测的编码序列 ， (B, )， float
-     * @param targets 目标的编码序列，(B, )， float
+     * @param preds 预测的编码序列 ， (B, )， kInt
+     * @param targets 目标的编码序列，(B, )， kInt
      */
-    void update(const at::Tensor &preds, const at::Tensor &targets,
-                const Tokenizer &tokenizer) {
+    void update(const at::Tensor &preds, const at::Tensor &targets) {
         auto B = preds.size(0);
         assert(preds.scalar_type() == at::kInt);
         assert(targets.scalar_type() == at::kInt);
@@ -80,11 +92,6 @@ public:
                                       pred_cpu.numel());
             std::vector<int> tmp_tar(tar_cpu.data_ptr<int>(),
                                      tar_cpu.data_ptr<int>() + tar_cpu.numel());
-
-//            std::cout << "targets formula[" << i << "] len = [" << tmp_tar.size() << "]:[" << tokenizer.decode(tmp_tar)
-//                      << "]\npred  formula[" << i << "] len = [" << tmp_pred.size() << "]:["
-//                      << tokenizer.decode(tmp_pred)
-//                      << "]\n";
 
             // 过滤忽略字符
             std::vector<int> filter_pred, filter_tar;
@@ -101,23 +108,14 @@ public:
             // 计算编辑距离
 
             auto dis = edit_distance(filter_pred, filter_tar);
-//            std::cout << "[pred.len" << filter_pred.size() << "][target.len = " << filter_tar.size()
-//                      << "]\nedit  dist = " << dis << '\n';
-//            for (auto c: filter_pred) {
-//                std::cout << c << ' ';
-//            }
-//            std::cout << '\n';
-//            for (auto c: tmp_tar) {
-//                std::cout << c << ' ';
-//            }
-//            std::cout << '\n';
             error += dis * 1.0 / std::max(filter_tar.size(), filter_pred.size());
         }
         total += B;
     }
 
     double get_error_rate() { return error / total; };
-    void clear(){
+
+    void clear() {
         error = 0;
         total = 0;
     }
@@ -134,8 +132,8 @@ public:
             : _flags("-\\/"), _finish(finish), _progress_str(100, unfini),
               _cur_progress(0) {}
 
-    void print_bar(const ushort n, std::string msg = "") {
-        for (ushort i = _cur_progress; i < n; i++) {
+    void print_bar(const int n, std::string msg = "") {
+        for (int i = _cur_progress; i < n; i++) {
             _progress_str[i] = _finish;
         }
         _cur_progress = n;
@@ -157,11 +155,11 @@ public:
 private:
     std::string _flags;
     std::string _progress_str;
-    ushort _cur_progress;
+    int _cur_progress;
     char _finish;
 };
 
-
+// 随机数相关
 std::random_device randomDevice;
 std::default_random_engine e1(randomDevice());
 

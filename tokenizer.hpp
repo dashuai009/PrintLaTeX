@@ -38,9 +38,30 @@ public:
             }
             auto token = index_to_token[index];
             if (res.empty()) { res += token; }
-            else { res = res + " " + token; }
+            else { res += " " + token; }
         }
         return res;
+    }
+
+    /**
+     * 从文件中读取字典，该文件与模型对应，应该是>>输出的结果
+     * @param file_path
+     */
+    explicit Tokenizer(const std::string &file_path) {
+        std::ifstream volcab;
+        volcab.open(file_path);
+        std::string tok;
+        int index;
+        while (volcab >> index >> tok) {
+            token_to_index[tok] = index;
+        }
+        auto tmp_token = index_to_token[0];
+        assert(tmp_token == pad_token);
+        auto pad_index = token_to_index[pad_token];
+        assert(pad_index == 0);
+        for (const auto &token: ignore_tokens) {
+            ignore_indices.insert(token_to_index[token]);
+        }
     }
 
     explicit Tokenizer(int min_count) {
@@ -69,13 +90,15 @@ public:
             }
         }
 
+        auto tmp_token = index_to_token[0];
+        std::swap(index_to_token[0], index_to_token[token_to_index[pad_token]]);
+        std::swap(token_to_index[pad_token], token_to_index[tmp_token]);
+
+
         for (const auto &token: ignore_tokens) {
             ignore_indices.insert(token_to_index[token]);
         }
-//        for(auto [idx, token]:index_to_token){
-//            std::cout <<"(" << idx << ", " << token << ", " <<word_cnt[] << "]\n";
-//        }
-        std::sort(tmp.begin(), tmp.end(), [](const auto &x,const  auto &y) {
+        std::sort(tmp.begin(), tmp.end(), [](const auto &x, const auto &y) {
             return y.second == x.second ? y.first < x.first : x.second < y.second;
         });
         for (auto [token, cnt]: tmp) {
@@ -89,6 +112,24 @@ public:
 
     const std::set<int> get_ignore_indices() {
         return ignore_indices;
+    }
+
+    friend std::ostream &operator<<(std::ostream &output,
+                                    const Tokenizer &D) {
+        for (auto [index, token]: D.index_to_token) {
+            output << index << ' ' << token << '\n';
+        }
+        return output;
+    }
+
+    friend std::istream &operator>>(std::istream &input, Tokenizer &D) {
+        int index;
+        std::string token;
+        while (input >> index >> token) {
+            D.token_to_index[token] = index;
+            D.index_to_token[index] = token;
+        }
+        return input;
     }
 
     const std::string pad_token{"<PAD>"}, sos_token{"<SOS>"},

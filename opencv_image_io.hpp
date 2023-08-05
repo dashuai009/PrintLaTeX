@@ -37,9 +37,7 @@ auto ToCvImage(const at::Tensor &tensor, int mat_type) -> cv::Mat {
  */
 auto ReadImage_Transform(const std::string &file_path) -> at::Tensor {
     auto img = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
-//    std::cout << img.rows << ' ' << img.cols << '\n';
     if (utils::rand_p(0.5)) {// 50%的概率执行缩放
-//        std::cout << "scale\n\n" << '\n';
         // 定义仿射变换矩阵
         cv::Mat M = cv::Mat::zeros(2, 3, CV_32FC1);
         float scale_x = utils::rand_double(0.8, 1.1);
@@ -77,6 +75,11 @@ auto ReadImage_Transform(const std::string &file_path) -> at::Tensor {
         cv::GaussianBlur(img, dst, cv::Size(ksize, ksize), sigma);
         img = dst;
     }
+
+    // 缩小一半
+    cv::Mat dst(img.size() / 2, img.type());
+    cv::resize(img, dst, dst.size());
+    img = dst;
 
     // very important!! 注意注意！！这地方必须加clone，不然函数退出时img会被销毁，tensor将会失效
     at::Tensor tensor_image = torch::from_blob(img.data, {img.rows, img.cols, 1}, at::kByte).clone();

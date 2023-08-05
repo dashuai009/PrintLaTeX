@@ -32,8 +32,11 @@ std::vector<std::string> Split(const std::string &s) {
     std::string word;
     while (ss >> word) {
         res.push_back(word);
+        if (res.size() > utils::max_output_len - 10) {//过长的公式直接截断
+            break;
+        }
     }
-    assert(res.size() < 1400);
+    assert(res.size() < utils::max_output_len);
     return res;
 }
 
@@ -63,13 +66,13 @@ public:
         } else if (mode == Mode::Test) {
             D.open(root + "/im2latex_test.lst");
         } else if (mode == Mode::Validate) {
-            D.open(root + "/im2latex_validate.lst");
+            D.open(root + "/im2latex_train.lst");
         }
         int index;
         std::string image_name, tmp;
         while (D >> index >> image_name >> tmp) {
             samples_.emplace_back(image_name, Formulas[index]);
-            if (mode == Mode::TinyTrain && samples_.size() == 200) {
+            if ((mode == Mode::TinyTrain || mode == Mode::Validate) && samples_.size() == 200) {
                 // 小训练集，500个
                 break;
             }
@@ -125,8 +128,8 @@ collate_fn(const std::vector<LaTeXDataType> &batch,
     }
     auto padded_images = torch::full({batch_size, 1, max_H, max_W}, 255).toType(at::kByte);
     auto batched_indices =
-            torch::full({batch_size, static_cast<int64_t>(max_len) + 2}, 79)
-                    .toType(at::ScalarType::Long); // 79 <EOS>
+            torch::full({batch_size, static_cast<int64_t>(max_len) + 2}, 0)
+                    .toType(at::ScalarType::Long); // 0 <PAD>
 
     std::random_device r;
     std::default_random_engine e1(r());

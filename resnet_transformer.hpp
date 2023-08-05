@@ -212,6 +212,36 @@ public:
         return output_indices;
     }
 
+    /**
+ * Make predictions at inference time.
+ * @param x : Input image, (1, C, H, W), at::kFloat
+ * @return (max_output_len) with elements in (0, num_classes - 1). at::kFloat
+ */
+    Tensor predict_cpu(const Tensor &x) {
+        using namespace torch::indexing;
+        auto B = x.size(0);
+        assert(B == 1);
+        auto S = max_output_len;
+
+        auto encoded_x = encode(x); // (Sx, 1, E)
+
+        auto output_indices = torch::full({B, S}, pad_index, at::TensorOptions(at::kInt));
+        output_indices[0][0] = sos_index;
+
+        for (int sy = 1; sy < S; ++sy) {
+            auto y = output_indices.index({Slice(), Slice(None, sy)});
+            // output_indices[0][sy]; // (B = 1, sy)
+            auto logits = decode(y, encoded_x);
+            auto output = torch::argmax(logits, -1);// (sy, B = 1)
+            output_indices.index_put_({Slice(), sy}, output.index({Slice(output.size(0) - 1, None)}));
+            if (output_indices[0][sy].item<int>() == eos_index) {
+                break;
+            }
+        }
+//        std::cout << output_indices.index({Slice(), Slice(0, 20)}) << '\n';
+        return output_indices;
+    }
+
 
 private:
     int d_model, max_output_len, sos_index, eos_index, pad_index;
