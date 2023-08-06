@@ -43,17 +43,20 @@ public:
         return res;
     }
 
+    Tokenizer()= default;
+
     /**
      * 从文件中读取字典，该文件与模型对应，应该是>>输出的结果
      * @param file_path
      */
-    explicit Tokenizer(const std::string &file_path) {
+    void load(const std::string &file_path) {
         std::ifstream volcab;
         volcab.open(file_path);
         std::string tok;
         int index;
         while (volcab >> index >> tok) {
             token_to_index[tok] = index;
+            index_to_token[index] = tok;
         }
         auto tmp_token = index_to_token[0];
         assert(tmp_token == pad_token);
